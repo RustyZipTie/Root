@@ -1,0 +1,15 @@
+clump carrot[
+    length : 6,
+    grow : {
+        length++
+    }>>length,
+    name : 'carrot'
+]
+
+clump beet[
+    length : 4,
+    grow : {
+        length++
+    }>>length,
+    name : 'beet'
+]
