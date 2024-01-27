@@ -20,46 +20,6 @@ const io = {
  * This object contains methods for parsing text
  */
 const wordPlay = {
-    /**
-     * takes a file and splits into clumps
-     * outside whitespace and ''s are removed
-     * @returns string[] containing all clumps
-     */
-    parseToClumps: code => {
-        if (code) {
-            //split clumps
-            let parsed = code.split('clump');
-
-            //trim whitespace
-            let temp = []
-            for (let clump of parsed) {
-                temp.push(clump.trim());
-            }
-            parsed = temp;
-
-            //remove any nulls
-            temp = [];
-            for (let clump of parsed) {
-                if (clump) {
-                    temp.push(clump);
-                }
-            }
-            parsed = temp;
-
-            return parsed;
-        } else {
-            return [undefined];
-        }
-    },
-
-    parseToElements: code => {
-        const raws = wordPlay.getBetween(code, '[',']')[0].split(',');
-        const elems = [wordPlay.splitLeftMulti(code, [' ', '['])[0]];
-        for(const raw of raws){
-            elems.push({id: raw.split(':')[0].trim(), code: raw.split(':')[1].trim()});
-        }
-        return elems;
-    },
 
     /**
      * splits string to array
@@ -97,11 +57,11 @@ const wordPlay = {
         let sections = []
         for (let char of chars) {
             if (char === delimiter) {
-                sections.push(section ? section.join(''):'bla');
+                sections.push(section ? section.join('') : 'bla');
                 section = [];
             }
             section.push(char);
-            
+
         }
         sections.push(section.join(''));
         return sections;
@@ -112,11 +72,11 @@ const wordPlay = {
         let section = [];
         let sections = []
         for (let char of chars) {
-            if(char === delimiter){
+            if (char === delimiter) {
                 sections.push(section.join(''));
                 sections.push(char);
                 section = [];
-            }else{
+            } else {
                 section.push(char);
             }
         }
@@ -145,11 +105,11 @@ const wordPlay = {
         let sections = []
         for (let char of chars) {
             if (delimiters.includes(char)) {
-                sections.push(section ? section.join(''):'bla');
+                sections.push(section ? section.join('') : 'bla');
                 section = [];
             }
             section.push(char);
-            
+
         }
         sections.push(section.join(''));
         return sections;
@@ -160,11 +120,11 @@ const wordPlay = {
         let section = [];
         let sections = []
         for (let char of chars) {
-            if(delimiters.includes(char)){
+            if (delimiters.includes(char)) {
                 sections.push(section.join(''));
                 sections.push(char);
                 section = [];
-            }else{
+            } else {
                 section.push(char);
             }
         }
@@ -173,21 +133,117 @@ const wordPlay = {
     },
 
     getBetween: (code, start, end) => {
-        let sections = [];
-        let split = wordPlay.splitBothMulti(code, [start, end]);
-        for(let i = 0; i < split.length; i++){
-            if(split[i] === start){
-                sections.push(split[i+1]);
+        if (start === end) {
+            //console.log('simple');
+            return split[split.find(val => val === start) + 1];
+        } else {
+            //console.log('complex');
+            let indent = 0;
+            let content = '';
+            let started = false;
+            const split = wordPlay.splitBothMulti(code, [start, end]);
+            for (let section of split) {
+                section = section.trim();
+                switch (section) {
+                    case start:
+                        indent++;
+                        break;
+
+                    case end:
+                        indent--;
+                        break;
+                }
+                if (indent > 0) {
+                    started = true;
+                    content = content.concat(section);
+                }
+                if (indent === 0 && started) {
+                    break;
+                }
             }
+            return content;
         }
-        return sections;
+    }
+}
+
+const codePlay = {
+    /**
+ * takes a file and splits into clumps
+ * outside whitespace and ''s are removed
+ * @returns string[] containing all clumps
+ */
+    parseToClumps: code => {
+        if (code) {
+            //split clumps
+            let parsed = code.split('clump');
+
+            //trim whitespace
+            let temp = []
+            for (let clump of parsed) {
+                temp.push(clump.trim());
+            }
+            parsed = temp;
+
+            //remove any nulls and parse elements
+            temp = [];
+            for (let clump of parsed) {
+                if (clump) {
+                    temp.push(codePlay.parseToElements(clump));
+                }
+            }
+            parsed = temp;
+
+            return parsed;
+        } else {
+            return [undefined];
+        }
+    },
+
+    parseToElements: code => {
+        const raws = wordPlay.getBetween(code, '[', ']').split(',');
+        //console.log('raws:',raws);
+        const clumpObj = { name: wordPlay.splitLeftMulti(code, [' ', '['])[0], elems: [] };
+        for (const raw of raws) {
+            clumpObj.elems.push({
+                id: raw.split(':')[0].trim(),
+                code: raw.split(':')[1].trim(),
+                type: codePlay.decideType(raw.split(':')[1].trim())
+            });
+        }
+        return clumpObj;
+
+    },
+
+    decideType: code => {
+        const nums = [...'0123456789'];
+        switch (code.charAt(0)) {
+            case '[':
+                return 'clump';
+            case '\\':
+            case '{':
+                return 'act'
+            case 'true':
+            case 'false':
+                return 'boolean';
+            case '`':
+            case "'":
+            case '"':
+                return 'string'
+            default:
+                let num = true;
+                for (char of [...code]) {
+                    num = nums.includes(char);
+                }
+                return num ? 'number' : undefined;
+        }
     }
 }
 
 
 function go(code) {
-    let clumps = wordPlay.parseToClumps(code);
-    console.log(wordPlay.parseToElements(clumps[0]));
+    let clumps = codePlay.parseToClumps(code);
+    // console.log(clumps[0].elems);
+    console.log(clumps[1].elems);
     //more stuff...
 }
 

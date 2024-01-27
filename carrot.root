@@ -3,6 +3,12 @@ clump carrot[
     grow : {
         length++
     }>>length,
+    do : \const ()\{
+
+    },
+    props : [
+
+    ],
     name : 'carrot'
 ]
 
@@ -11,5 +17,6 @@ clump beet[
     grow : {
         length++
     }>>length,
+    sweet : true,
     name : 'beet'
 ]
