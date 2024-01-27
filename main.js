@@ -132,6 +132,21 @@ const wordPlay = {
         return sections;
     },
 
+    splitFirstRemove: (code, delimiter) => {
+        let first = '';
+        let second = '';
+        const chars = [...code];
+        let i = 0;
+        for(;chars[i] !== delimiter; i++){
+            first = first.concat(chars[i]);
+        }
+        i++;
+        for(;i<chars.length; i++){
+            second = second.concat(chars[i]);
+        }
+        return [first.trim(), second.trim()];
+    },
+
     getBetween: (code, start, end) => {
         if (start === end) {
             //console.log('simple');
@@ -143,6 +158,7 @@ const wordPlay = {
             let started = false;
             const split = wordPlay.splitBothMulti(code, [start, end]);
             for (let section of split) {
+                
                 section = section.trim();
                 switch (section) {
                     case start:
@@ -154,8 +170,10 @@ const wordPlay = {
                         break;
                 }
                 if (indent > 0) {
+                    if (started) {
+                        content = content.concat(section);
+                    }
                     started = true;
-                    content = content.concat(section);
                 }
                 if (indent === 0 && started) {
                     break;
@@ -205,8 +223,8 @@ const codePlay = {
         const clumpObj = { name: wordPlay.splitLeftMulti(code, [' ', '['])[0], elems: [] };
         for (const raw of raws) {
             clumpObj.elems.push({
-                id: raw.split(':')[0].trim(),
-                code: raw.split(':')[1].trim(),
+                id: wordPlay.splitFirstRemove(raw, ':')[0].trim(),
+                code: wordPlay.splitFirstRemove(raw, ':')[1].trim(),
                 type: codePlay.decideType(raw.split(':')[1].trim())
             });
         }
@@ -222,9 +240,9 @@ const codePlay = {
             case '\\':
             case '{':
                 return 'act'
-            case 'true':
-            case 'false':
-                return 'boolean';
+            case 't':
+            case 'f':
+                return (code.trim() === 'true' || code.trim() === 'false') ? 'boolean' : undefined;
             case '`':
             case "'":
             case '"':
@@ -242,8 +260,8 @@ const codePlay = {
 
 function go(code) {
     let clumps = codePlay.parseToClumps(code);
-    // console.log(clumps[0].elems);
-    console.log(clumps[1].elems);
+    console.log(clumps[0].name, clumps[0].elems);
+    console.log(clumps[1].name, clumps[1].elems);
     //more stuff...
 }
 

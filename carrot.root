@@ -7,7 +7,7 @@ clump carrot[
 
     },
     props : [
-
+        type : 'nelson'
     ],
     name : 'carrot'
 ]
