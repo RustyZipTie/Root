@@ -1,0 +1,54 @@
+*{
+    font-family: 'Courier New', Courier, monospace;
+    color:white;
+    background-color: black;
+}
+
+#head{
+    width: 55vw;
+    height: 15vw;
+
+}
+
+#subtitle{
+    margin: 0;
+    font-size: 3vw;
+    float: right;
+    position: absolute;
+    left: 57vw;
+    top: 5vw;
+}
+
+#nav{
+    padding: 1vw;
+}
+
+svg{
+    top:3vw;
+    position:absolute;
+    float: left;
+}
+
+h1{
+    margin: 0;
+    position: absolute;
+    left: 10vw;
+    top: 2.5vh;
+    color:white;
+    font-size: 12vw;
+    
+    font-weight: normal;
+}
+
+a{
+    text-decoration: none;
+}
+
+a:hover{
+    text-decoration: underline;
+}
+
+#nav a, #nav p{
+    display: inline;
+    font-size: 3vw;
+}
