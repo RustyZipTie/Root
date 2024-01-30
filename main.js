@@ -3,20 +3,13 @@ const { delimiter } = require('path');
 const stream = require('stream');
 
 //classes
-class Code extends String {
-    
-    toElems(){
-        const elems = [];
-        for(let chunk of this.trim().split()){
-            chunk = chunk.toCode();
-            elems.push(new Elem(chunk));
-        }
-        return elems;
-    }
-}
-class Clump{
-    constructor(code) {
 
+class Clump {
+    constructor(code) {
+        this.elems = [];
+        for (let chunk of code.getBetween('[', ']').trim().split(',')) {
+            this.elems.push(new Elem(chunk.trim()));
+        }
     }
 
     addElem(elem) {
@@ -40,14 +33,20 @@ class Clump{
         }
         return undefined;
     }
+
+    log() {
+        for (let elem of this.elems) {
+            console.log(elem);
+        }
+    }
 }
 
-class Act{
-    constructor(code){
-
+class Act {
+    constructor(code) {
+        this.lines = code.getBetween('{', '}').split(';');
     }
 
-    execute(){
+    execute() {
 
     }
 }
@@ -56,58 +55,62 @@ class Elem {
 
     constructor(code) {
         this.id = code.trim().splitFirstRemove(':')[0];
-        this.code = code.rim().splitFirstRemove(':')[1];
-        this.parse();
-        this.decideType();
+        this.parse(code.trim().splitFirstRemove(':')[1].trim());
     }
 
-    parse(){
-        this.decideType();
-        switch(this.type){
+    parse(code) {
+        this.decideType(code);
+        switch (this.type) {
             case 'clump':
-                this.content = new Clump(this.code);
+                this.content = new Clump(code);
                 break;
 
             case 'act':
-                this.content = new Act(this.code);
+                this.content = new Act(code);
                 break;
 
             case 'boolean':
-                this.content = (this.code === 'true');
+                this.content = (code === 'true');
                 break;
 
             case 'string':
-                this.content = this.code;
+                this.content = code;
                 break;
 
             case 'number':
-                this.content = Number(this.code);
+                this.content = Number(code);
                 break;
         }
     }
 
 
-    decideType(code){
+    decideType(code) {
+
         const nums = [...'0123456789'];
         switch (code.charAt(0)) {
             case '[':
                 this.type = 'clump';
+                break;
             case '\\':
             case '{':
                 this.type = 'act';
+                break;
             case 't':
             case 'f':
                 this.type = (code.trim() === 'true' || code.trim() === 'false') ? 'boolean' : undefined;
+                break;
             case '`':
             case "'":
             case '"':
                 this.type = 'string';
+                break;
             default:
                 let num = true;
-                for (char of [...code]) {
+                for (let char of [...code]) {
                     num = nums.includes(char);
                 }
                 this.type = num ? 'number' : undefined;
+                break;
         }
     }
 }
@@ -115,13 +118,13 @@ class Elem {
 
 const io = {
     getCode: fileName => {
-        fs.readFile(fileName, (err, data) => {
+        fs.readFile(fileName + '.root', (err, data) => {
             if (err) {
                 console.log(`WAAA ${err}`);
                 //return;
             }
             //console.log(data.toString(), 'data');
-            go(data.toString());
+            go(fileName + ' : ' + data.toString());
         })
     }
 }
@@ -130,7 +133,7 @@ const io = {
 
 
 //add my custom methods to String...
-String.prototype.splitRight = function(delimiter) {
+String.prototype.splitRight = function (delimiter) {
     const chars = [...this];
     let section = [];
     let sections = []
@@ -145,7 +148,7 @@ String.prototype.splitRight = function(delimiter) {
     return sections;
 }
 
-String.prototype.splitLeft = function(delimiter){
+String.prototype.splitLeft = function (delimiter) {
     const chars = [...this];
     let section = [];
     let sections = []
@@ -161,7 +164,7 @@ String.prototype.splitLeft = function(delimiter){
     return sections;
 }
 
-String.prototype.splitBoth = function(delimiter) {
+String.prototype.splitBoth = function (delimiter) {
     const chars = [...this];
     let section = [];
     let sections = []
@@ -178,7 +181,7 @@ String.prototype.splitBoth = function(delimiter) {
     return sections;
 }
 
-String.prototype.splitRightMulti = function(delimiters) {
+String.prototype.splitRightMulti = function (delimiters) {
     const chars = [...this];
     let section = [];
     let sections = []
@@ -193,7 +196,7 @@ String.prototype.splitRightMulti = function(delimiters) {
     return sections;
 }
 
-String.prototype.splitLeftMulti = function(delimiters) {
+String.prototype.splitLeftMulti = function (delimiters) {
     const chars = [...this];
     let section = [];
     let sections = []
@@ -209,7 +212,7 @@ String.prototype.splitLeftMulti = function(delimiters) {
     return sections;
 }
 
-String.prototype.splitBothMulti = function(delimiters) {
+String.prototype.splitBothMulti = function (delimiters) {
     const chars = [...this];
     let section = [];
     let sections = []
@@ -226,7 +229,7 @@ String.prototype.splitBothMulti = function(delimiters) {
     return sections;
 }
 
-String.prototype.splitFirstRemove = function(delimiter) {
+String.prototype.splitFirstRemove = function (delimiter) {
     let first = '';
     let second = '';
     const chars = [...this];
@@ -241,7 +244,7 @@ String.prototype.splitFirstRemove = function(delimiter) {
     return [first.trim(), second.trim()];
 },
 
-String.prototype.getBetween = function(start, end) {
+    String.prototype.getBetween = function (start, end) {
         if (start === end) {
             //console.log('simple');
             return split[split.find(val => val === start) + 1];
@@ -250,7 +253,7 @@ String.prototype.getBetween = function(start, end) {
             let indent = 0;
             let content = '';
             let started = false;
-            const split = code.splitBothMulti([start, end]);
+            const split = this.splitBothMulti([start, end]);
             for (let section of split) {
 
                 section = section.trim();
@@ -275,95 +278,58 @@ String.prototype.getBetween = function(start, end) {
             }
             return content;
         }
-}
+    }
 
-String.prototype.toCode = function(){
-    return new Code(this);
-}
+String.prototype.getParallel = function (start, end) {
+    let indent = 0;
+    let temp = '';
+    let contents = [];
+    let started = false;
+    const split = this.splitBothMulti([start, end]);
+    for (let section of split) {
 
-const codePlay = {
-    /**
- * takes a file and splits into clumps
- * outside whitespace and ''s are removed
- * @returns string[] containing all clumps
- */
-    parseToClumps: code => {
-        if (code) {
-            //split clumps
-            let parsed = code.split('clump');
+        section = section.trim();
+        switch (section) {
+            case start:
+                indent++;
+                break;
 
-            //trim whitespace
-            let temp = []
-            for (let clump of parsed) {
-                temp.push(clump.trim());
-            }
-            parsed = temp;
-
-            //remove any nulls and parse elements
-            temp = [];
-            for (let clump of parsed) {
-                if (clump) {
-                    temp.push(codePlay.parseToElements(clump));
-                }
-            }
-            parsed = temp;
-
-            return parsed;
-        } else {
-            return [undefined];
+            case end:
+                indent--;
+                break;
         }
-    },
-
-    parseToElements: code => {
-        const raws = code.getBetween('[', ']').split(',');
-        //console.log('raws:',raws);
-        const clumpObj = { name: code.splitLeftMulti([' ', '['])[0], elems: [] };
-        for (const raw of raws) {
-            clumpObj.elems.push({
-                id: raw.splitFirstRemove(':')[0].trim(),
-                code: raw.splitFirstRemove(':')[1].trim(),
-                type: codePlay.decideType(raw.split(':')[1].trim())
-            });
+        if (indent > 0) {
+            if (started) {
+                temp = temp.concat(section);
+            }
+            started = true;
         }
-        return clumpObj;
-
-    },
-
-    decideType: code => {
-        const nums = [...'0123456789'];
-        switch (code.charAt(0)) {
-            case '[':
-                return 'clump';
-            case '\\':
-            case '{':
-                return 'act'
-            case 't':
-            case 'f':
-                return (code.trim() === 'true' || code.trim() === 'false') ? 'boolean' : undefined;
-            case '`':
-            case "'":
-            case '"':
-                return 'string'
-            default:
-                let num = true;
-                for (char of [...code]) {
-                    num = nums.includes(char);
-                }
-                return num ? 'number' : undefined;
+        if (index <= 0){
+            started = false;
         }
     }
+    return contents;
+}
+Array.prototype.splitRemoveMulti = function(delimiters){
+    const newArr = [];
+    this.map(val =>{
+        let temp = [];
+        if(delimiters.includes(val)){
+            newArr.push(temp);
+            temp = [];
+        }else{
+            temp.push(val);
+        }
+    })
+    newArr.push(temp);
+    return newArr;
 }
 
-
 function go(code) {
-    // let clumps = codePlay.parseToClumps(code);
-    // console.log(clumps[0].name, clumps[0].elems);
-    // console.log(clumps[1].name, clumps[1].elems);
-
-    const grib = 'grib';
-    grib.bla = 10;
-    console.log(grib.bla);
+    const rootElement = new Elem(code);
+    console.log(code.getParallel('[',']'));
     //more stuff...
 }
 
+//getCode calls go
 io.getCode(process.argv[2]);
