@@ -310,6 +310,7 @@ String.prototype.getParallel = function (start, end) {
     }
     return contents;
 }
+
 Array.prototype.splitRemoveMulti = function(delimiters){
     const newArr = [];
     this.map(val =>{
